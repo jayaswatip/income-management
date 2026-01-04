@@ -8,47 +8,51 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
+/* ================= Middleware ================= */
 app.use(helmet());
 app.use(cors());
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Routes
+/* ================= Routes ================= */
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/budgets', require('./routes/budgets'));
 app.use('/api/dashboard', require('./routes/dashboard'));
 
-// Serve static assets in production
+/* ================= Production Static Files ================= */
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client/build')));
-  
+  app.use(express.static(path.resolve(__dirname, 'client', 'build')));
+
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+    res.sendFile(
+      path.resolve(__dirname, 'client', 'build', 'index.html')
+    );
   });
 }
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.log('MongoDB connection error:', err));
+/* ================= Database Connection ================= */
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log('MongoDB connected successfully'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
-// Error handling middleware
+/* ================= Error Handling ================= */
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Something went wrong!' });
 });
 
-// 404 handler
+/* ================= 404 Handler ================= */
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
+/* ================= Server ================= */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
